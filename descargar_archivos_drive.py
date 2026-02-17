@@ -12,7 +12,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 # --- CONFIGURACIÓN ---
-SCOPES = ['https://www.googleapis.com/auth/drive']
+SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 CONFIG_FILE = 'config_app.json'
 FILTRO_EMAIL = "alejandra.aguero@dato.com.py"
 
@@ -106,6 +106,7 @@ def ejecutar_descarga():
                 fecha_mod_str = archivo['modifiedTime'].split('T')[0]
                 fecha_mod = datetime.strptime(fecha_mod_str, '%Y-%m-%d').date()
 
+                #if fecha_mod == hoy or fecha_mod < hoy:
                 if fecha_mod == hoy:
                     nuevo_nombre = f"{prefijo}-{archivo['name']}"
                     ruta_final = os.path.join(ruta_destino, nuevo_nombre)
@@ -119,8 +120,7 @@ def ejecutar_descarga():
                         while not done:
                             _, done = downloader.next_chunk()
                 else:
-                    # Opcional: imprimir que se salta por fecha antigua
-                    pass
+                    print("No existe archivos actualizados hoy en la carpeta 2026.")
 
         except Exception as e:
             print(f"Error en {nombre_categoria}: {e}")
