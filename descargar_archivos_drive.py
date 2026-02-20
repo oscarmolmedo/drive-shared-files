@@ -67,7 +67,7 @@ def ejecutar_descarga():
     categorias = obtener_categorias_dinamicas(service)
     
     # Fecha de hoy en formato YYYY-MM-DD para comparar
-    hoy = datetime.now(timezone.utc).date()
+    hoy = datetime.now().date()
 
     for nombre_raw, id_raiz in categorias.items():
         nombre_categoria = unquote(nombre_raw)
