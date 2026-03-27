@@ -61,43 +61,47 @@ def obtener_categorias_dinamicas(service):
             if item.get('sharingUser', {}).get('emailAddress', '').lower() == FILTRO_EMAIL.lower()}
 
 
-def formatear_y_guardar(contenido_bytes, ruta_final):
-    """
-    Toma los bytes del CSV original, aplica el formato del 'archivo modelo'
-    y lo guarda en la ruta final.
-    """
+def procesar_y_guardar_csv_limpio(byte_content, ruta_final, nombre_categoria):
     try:
-        # 1. Leer el CSV desde memoria (probamos utf-8, si falla latin-1 por los acentos)
+        # 1. Leer forzando que TODO sea string (dtype=str) para evitar el ".0"
+        # Usamos sep=None para detectar si el origen viene con , o ;
         try:
-            df = pd.read_csv(io.BytesIO(contenido_bytes), encoding='utf-8')
+            df = pd.read_csv(io.BytesIO(byte_content), encoding='utf-8', sep=None, engine='python', dtype=str)
         except UnicodeDecodeError:
-            df = pd.read_csv(io.BytesIO(contenido_bytes), encoding='latin-1')
+            df = pd.read_csv(io.BytesIO(byte_content), encoding='latin-1', sep=None, engine='python', dtype=str)
 
-        # Convertir todo a string y manejar nulos
-        df = df.astype(str).replace('nan', '')
+        # 2. Limpiar encabezados (quitar saltos de línea o espacios molestos)
+        df.columns = [str(c).replace('\n', ' ').strip() for c in df.columns]
 
         lineas_formateadas = []
-        
-        # 2. Formatear Encabezados (idéntico al modelo)
-        headers = df.columns.tolist()
-        header_str = f'"{headers[0]},' + ",".join([f'""{h}""' for h in headers[1:]]) + '"'
+
+        # 3. Formatear Encabezados
+        # Resultado esperado: "col1,""col2"",""col3"""
+        cols = df.columns.tolist()
+        header_str = f'"{cols[0]},' + ",".join([f'""{c}""' for c in cols[1:]]) + '"'
         lineas_formateadas.append(header_str)
-        
-        # 3. Formatear Filas
+
+        # 4. Formatear Filas
         for _, row in df.iterrows():
             vals = row.values
+            # Al leer con dtype=str, vals[0] ya no tendrá ".0"
+            # Limpiamos posibles valores nulos (NaN) por si acaso
+            vals = [str(v) if pd.notna(v) else "" for v in vals]
+            
             # Formato: "valor1,""valor2"",""valor3"""
             row_str = f'"{vals[0]},' + ",".join([f'""{v}""' for v in vals[1:]]) + '"'
             lineas_formateadas.append(row_str)
-        
-        # 4. Guardar con saltos de línea Windows (CRLF) y codificación UTF-8
-        with open(ruta_final, 'w', encoding='utf-8', newline='') as f:
-            f.write('\r\n'.join(lineas_formateadas) + '\r\n')
+
+        # 5. Guardar el archivo con la codificación adecuada para Paraguay/Windows
+        with open(ruta_final, 'w', encoding='utf-8-sig') as f:
+            f.write("\n".join(lineas_formateadas))
             
-        print(f"   [OK] Formato aplicado y guardado en: {os.path.basename(ruta_final)}")
+        print(f"  [Procesado] CSV formateado con éxito: {os.path.basename(ruta_final)}")
+        return True
 
     except Exception as e:
-        print(f"   [Error Procesamiento] No se pudo formatear el archivo: {e}")
+        print(f"  [Error Procesamiento] Error en {nombre_categoria}: {e}")
+        return False
 
 def ejecutar_descarga():
     # ... (Configuración inicial igual) ...
@@ -145,7 +149,7 @@ def ejecutar_descarga():
                     
                     # --- PROCESAMIENTO ---
                     # Enviamos los bytes acumulados en memoria a nuestra función de formato
-                    formatear_y_guardar(fh.getvalue(), ruta_final)
+                    procesar_y_guardar_csv_limpio(fh.getvalue(), ruta_final, nombre_categoria)
                     
                 else:
                     print(f"Saltando {archivo['name']}: No actualizado hoy.")
