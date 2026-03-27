@@ -13,7 +13,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 # --- CONFIGURACIÓN ---
-SCOPES = ['https://www.googleapis.com/auth/drive']
+SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 CONFIG_FILE = 'config_app.json'
 FILTRO_EMAIL = "alejandra.aguero@dato.com.py"
 
@@ -109,7 +109,13 @@ def ejecutar_descarga():
     if not ruta_destino: return
     service = autenticar()
     categorias = obtener_categorias_dinamicas(service)
+<<<<<<< HEAD
     hoy = datetime.now(timezone.utc).date()
+=======
+    
+    # Fecha de hoy en formato YYYY-MM-DD para comparar
+    hoy = datetime.now().date()
+>>>>>>> 00f7f079e84cf5c2841f5c72de76a919e3eeac10
 
     for nombre_raw, id_raiz in categorias.items():
         nombre_categoria = unquote(nombre_raw)
@@ -133,7 +139,12 @@ def ejecutar_descarga():
                 fecha_mod_str = archivo['modifiedTime'].split('T')[0]
                 fecha_mod = datetime.strptime(fecha_mod_str, '%Y-%m-%d').date()
 
+<<<<<<< HEAD
                 if fecha_mod == hoy: #or fecha_mod < hoy:
+=======
+                #if fecha_mod == hoy or fecha_mod < hoy:
+                if fecha_mod == hoy:
+>>>>>>> 00f7f079e84cf5c2841f5c72de76a919e3eeac10
                     nuevo_nombre = f"{prefijo}-{archivo['name']}"
                     ruta_final = os.path.join(ruta_destino, nuevo_nombre)
 
@@ -152,7 +163,11 @@ def ejecutar_descarga():
                     procesar_y_guardar_csv_limpio(fh.getvalue(), ruta_final, nombre_categoria)
                     
                 else:
+<<<<<<< HEAD
                     print(f"Saltando {archivo['name']}: No actualizado hoy.")
+=======
+                    print("No existe archivos actualizados hoy en la carpeta 2026.")
+>>>>>>> 00f7f079e84cf5c2841f5c72de76a919e3eeac10
 
         except Exception as e:
             print(f"Error en {nombre_categoria}: {e}")
